@@ -6,8 +6,8 @@ import { Web3 } from 'web3';
 
 const NFTABI = require("./contracts/NFT.json")["abi"];
 // test addr
-const contract_addr = '0x0165878a594ca255338adfa4d48449f69242eb8f';
-//const contract_addr = '0x4C327Faf044B323472C71E212808396e1BF26fB5';
+//const contract_addr = '0x0165878a594ca255338adfa4d48449f69242eb8f';
+const contract_addr = '0x4C327Faf044B323472C71E212808396e1BF26fB5';
 
 const Web3Context = createContext(null);
 export const enable_ipfs = true;
