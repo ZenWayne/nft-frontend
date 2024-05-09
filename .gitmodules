@@ -1,7 +1,0 @@
-[submodule "out/NFT.sol/NFT.json"]
-    path = contracts/NFT.json
-    url = https://github.com/i6o6i/erc721
-
-[submodule "lib/forge-std"]
-	path = lib/forge-std
-	url = https://github.com/foundry-rs/forge-std
