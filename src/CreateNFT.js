@@ -3,10 +3,10 @@ import { Button, Alert } from 'react-bootstrap';
 import { Form } from 'react-bootstrap';
 import InputGroup from 'react-bootstrap/InputGroup';
 import './CenteredDiv.css';
-import Web3Context from './Web3Context';
+import Web3Context, { readFromHttpIPFS, readFromIPFSJSON, enable_ipfs } from './Web3Context';
 
 function CreateNFT() {
-  const { web3, contract, ethAddress, ipfs } = useContext(Web3Context);
+  const { web3, contract, ethAddress} = useContext(Web3Context);
   const [tokenId, setTokenId] = useState('');
   const [ipfsUri, setIpfsUri] = useState('');
   const [alertMsg, setAlertMsg] = useState('');
@@ -21,18 +21,17 @@ function CreateNFT() {
 
   const isipfsuri = (str) => {
     //is prefix with "ipfs://" and is a valid CID
+    console.log('isipfsuri:', str);
     const ipfsRegex = /^ipfs:\/\/(Qm|bafy)[a-zA-Z0-9]+$/;
     return ipfsRegex.test(str);
-  };
-
-  const decoder = new TextDecoder();
+  }; 
 
   const getcidfromuri = (uri) => {
     const parts = uri.split('/');
     const cid = parts[parts.length - 1];
     return cid;
   };
- 
+
   const checkifMetadataValid = async (metadata_json_uri) => {
     try {
       if (!isipfsuri(metadata_json_uri)) {
@@ -40,21 +39,22 @@ function CreateNFT() {
       }
       // Fetch JSON data from the ipfs URI
       //ipfs cat is not a function fix it
-      console.log(ipfs, ipfs.cat);
-      //const fileStream = ;
-      let content = '';
-      for await (const chunk of ipfs.cat(getcidfromuri(metadata_json_uri))) {
-        content += decoder.decode(chunk, {
-          stream: true
-        })
+      let jsonData = null;
+
+      const cid = getcidfromuri(metadata_json_uri);
+      if (enable_ipfs) {
+        console.log(ipfs, ipfs.cat);
+        jsonData = await readFromIPFSJSON(ipfs, cid)
+      }else{
+        jsonData = await readFromHttpIPFS(cid);
       }
-      const jsonData = JSON.parse(content);
 
       if (!isipfsuri(jsonData.image)) {
+        console.log("metadata_json_uri", metadata_json_uri, 'Invalid image', jsonData)
         throw new Error('Invalid image');
       }
       return true;
-  
+
     } catch (error) {
       console.error('There was a problem fetching the JSON data:', error);
       // Return null or handle the error as needed
@@ -83,7 +83,7 @@ function CreateNFT() {
     setIpfsUri('');
   };
   //set page to loding if ipfs or web3 is not initialized
-  if (!web3 || !contract || !ipfs) {
+  if (!web3 || !contract) {
     return <div className='centered-div'>Loading...</div>;
   }
 
