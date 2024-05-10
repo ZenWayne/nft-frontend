@@ -126,7 +126,7 @@ export const Web3Provider = ({ children }) => {
           }
         } else {
           //console.log('Contract has not deployed on this network, Please connect to the Sepolia network');
-          setErrorMsg('Contract has not deployed on this network, Please connect to the Sepolia network');
+          setErrorMsg('Contract has not deployed on this network, Please switch to the Sepolia network and refresh');
         }
       } else {
         setErrorMsg('Non-Ethereum browser detected. You should consider trying MetaMask!');

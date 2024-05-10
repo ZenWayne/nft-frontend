@@ -1,6 +1,8 @@
 # nft-frontend
 NFT frontend for [i6o6i/ERC721](https://github.com/i6o6i/erc721)
 
+Powered By React, Web3js, Helia
+
 [DEMO](https://nft.kuanzw.com/)
 
 ### Prerequisite
