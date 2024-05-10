@@ -7,10 +7,11 @@ import { abbreviatedAddress } from './Web3Context';
 
 function App() {
     const [activeContent, setActiveContent] = useState('home');
-    const { web3, contract, ethAddress } = useContext(Web3Context);
+    const { web3, contract, ethAddress, ipfs, errorMsg } = useContext(Web3Context);
     const [NFTName, setNFTName] = useState('null');
 
     const [balance, setBalance] = useState(0);
+    const [content, setContent] = useState('');
 
     useEffect(() => {
         const fetchBalance = async () => {
@@ -30,31 +31,36 @@ function App() {
                 setNFTName(String(name));
             }
         };
+        console.log('fetchName Effect:', contract);
         fetchName();
     }, [contract]);
 
     useEffect(() => {
         console.log('balance:', balance);
-    }, [balance])
+    }, [balance]);
 
-    const handleNavClick = (content) => {
-        setActiveContent(content);
-    };
-
-    const renderContent = () => {
-        switch (activeContent) {
-            case 'home':
-                return (
-                    <Home />
-                );
-            case 'CreateNFT':
-                return (
-                    <CreateNFT />
-                );
-            default:
-                return null;
+    useEffect(() => {
+        console.log('errorMsg:', errorMsg);
+        if (errorMsg) {
+            setContent(<div className='centered-div'>{errorMsg}</div>);
+            return;
         }
-    };
+        switch (activeContent) {
+            case 'home': {
+                setContent(<Home />);
+                return;
+            }
+            case 'CreateNFT': {
+                setContent(<CreateNFT />);
+                return;
+            }
+            default: {
+                setContent(<Home />);
+                return;
+            }
+        }
+    }, [activeContent, errorMsg]);
+
 
     return (
         <>
@@ -64,13 +70,13 @@ function App() {
                     <Navbar.Toggle aria-controls="basic-navbar-nav" />
                     <Navbar.Collapse id="basic-navbar-nav" >
                         <Nav className='me-auto'>
-                            <Nav.Link href='#home' onClick={() => handleNavClick('home')}>
+                            <Nav.Link href='#home' onClick={() => setActiveContent('home')}>
                                 Home
                             </Nav.Link>
-                            <Nav.Link href='#CreateNFT' onClick={() => handleNavClick('CreateNFT')}>
+                            <Nav.Link href='#CreateNFT' onClick={() => setActiveContent('CreateNFT')}>
                                 CreateNFT
                             </Nav.Link>
-                        </Nav> 
+                        </Nav>
                         <Nav className='ml-auto'>
                             {/* add some space between */}
                             <Navbar.Text style={{ marginRight: '10px' }}>Address : {abbreviatedAddress(ethAddress)}</Navbar.Text>
@@ -80,7 +86,7 @@ function App() {
                 </Container>
             </Navbar>
             <br />
-            {renderContent()}
+            {content}
         </>
 
     );

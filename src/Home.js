@@ -5,7 +5,7 @@ import { useEffect, useState, useContext } from 'react';
 import { Container, Col, Row, Image, Figure } from 'react-bootstrap';
 
 function Home() {
-    const { web3, contract, ethAddress, ipfs} = useContext(Web3Context);
+    const { web3, contract, ethAddress, ipfs, errorMsg} = useContext(Web3Context);
     //const {enable_ipfs} = useContext(Web3Context)?.EnableIPFS ?? false;
     //id => metadata
     const [metadataMap, setMetadataMap] = useState(new Map());

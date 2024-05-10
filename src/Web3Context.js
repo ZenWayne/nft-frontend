@@ -7,7 +7,12 @@ import { Web3 } from 'web3';
 const NFTABI = require("./contracts/NFT.json")["abi"];
 // test addr
 //const contract_addr = '0x0165878a594ca255338adfa4d48449f69242eb8f';
-const contract_addr = '0x4C327Faf044B323472C71E212808396e1BF26fB5';
+const contract_addrs = {
+  11155111: '0x4C327Faf044B323472C71E212808396e1BF26fB5',
+  //foundry anvil local testnet
+  31337: '0x4C327Faf044B323472C71E212808396e1BF26fB5'
+}
+
 
 const Web3Context = createContext(null);
 export const enable_ipfs = true;
@@ -44,7 +49,7 @@ export const readFromHttpIPFS = async (cid) => {
 
 export const readFromIPFSJSON = async (ipfs, cid) => {
   //use ipfs state in Web3Provider in this file
-  
+
   const decoder = new TextDecoder();
   let content = '';
   for await (const chunk of ipfs.cat(cid)) {
@@ -60,7 +65,7 @@ export const readFromIPFSIMAGE = async (ipfs, cid) => {
   console.log('readFromIPFSIMAGE:', cid);
   let content = new Uint8Array(); // Initialize as a Uint8Array to handle binary data
   for await (const chunk of ipfs.cat(cid)) {
-      content = new Uint8Array([...content, ...chunk]); // Concatenate binary data correctly
+    content = new Uint8Array([...content, ...chunk]); // Concatenate binary data correctly
   }
   const blob = new Blob([content], { type: 'image/jpeg' });
   console.log('blob:', blob);
@@ -79,43 +84,54 @@ export const Web3Provider = ({ children }) => {
   const [contract, setNFTContract] = useState(null);
   const [ethAddress, setEthAddress] = useState(null);
   const [ipfs, setIPFS] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
 
-  useEffect(() => {
-    const setupContracts = () => {
-      console.log('NFTABI ', NFTABI);
-      setNFTContract(new web3.eth.Contract(NFTABI, contract_addr));
+
+  const setupContracts = (web3Instance, chainId) => {
+    console.log('NFTABI ', NFTABI);
+    setNFTContract(new web3Instance.eth.Contract(NFTABI, contract_addrs[chainId]));
+  }
+
+  const setupAccounts = async (web3Instance) => {
+    try {
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const accounts = await web3Instance.eth.getAccounts();
+      setEthAddress(accounts[0]);
+      window.ethereum.on('accountsChanged', (accounts) => {
+        setEthAddress(accounts[0]);
+      });
+    } catch (error) {
+      console.error(error);
+      setErrorMsg(error.message, ' Check if you are connected to sepolia network');
     }
-
-    if (web3) {
-      setupContracts();
-
-    }
-  }, [web3]);
+  }
 
   // Initialize Web3 and IPFS when first loaded
   useEffect(() => {
     const initWeb3 = async () => {
-      const web3 = new Web3(window.ethereum);
-      console.log('NFTABI ', NFTABI);
-      setNFTContract(new web3.eth.Contract(NFTABI, contract_addr));
-
       if (window.ethereum) {
-        try {
+        const chainIdhex = await window.ethereum.request({ method: 'eth_chainId' });
+        const chainId = parseInt(chainIdhex, 16);
+        if (contract_addrs[chainId]) {
+          try {
+            const web3 = new Web3(window.ethereum);
+            //console.log('NFTABI ', NFTABI);
 
-          await window.ethereum.request({ method: 'eth_requestAccounts' });
-
-          setWeb3(web3);
-          const accounts = await web3.eth.getAccounts();
-          setEthAddress(accounts[0]);
-          window.ethereum.on('accountsChanged', (accounts) => {
-            setEthAddress(accounts[0]);
-          });
-        } catch (error) {
-          console.error(error);
+            setWeb3(web3);
+            setupContracts(web3, chainId);
+            setupAccounts(web3);
+          } catch (error) {
+            console.error(error);
+            setErrorMsg(error.message, ' Check if you are connected to sepolia network');
+          }
+        } else {
+          //console.log('Contract has not deployed on this network, Please connect to the Sepolia network');
+          setErrorMsg('Contract has not deployed on this network, Please connect to the Sepolia network');
         }
       } else {
-        console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+        setErrorMsg('Non-Ethereum browser detected. You should consider trying MetaMask!');
       }
+
     };
     const initIPFS = async () => {
       const helia = await createHelia();
@@ -134,10 +150,10 @@ export const Web3Provider = ({ children }) => {
       setIPFS(fs);
     };
 
-    if(enable_ipfs){
+    if (enable_ipfs) {
       initIPFS();
     }
-    
+
     initWeb3();
   }, []);
 
@@ -157,8 +173,8 @@ export const Web3Provider = ({ children }) => {
     web3,
     contract,
     ethAddress,
-    //EnableIPFS
-    ipfs
+    ipfs,
+    errorMsg
   };
 
   return (
